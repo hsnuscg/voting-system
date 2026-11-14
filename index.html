@@ -153,7 +153,7 @@ td.wide{white-space:normal;min-width:280px}
 <script>
 /* ═══════════ 設定：部署 Apps Script 後，把網頁應用程式網址貼在這裡 ═══════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbx9EHBi4FsyM_bpByshaGArOck66_1RhDDwFs4qyPPO5wMWVN2obclNwvUiCbi4hoET/exec';
-const POLL_MS = { voter: 2000, admin: 2000, screen: 1500 };
+const POLL_MS = { idle: 8000, live: 2500, hidden: 15000 }; // 閒時 8 秒；表決進行中 2.5 秒；分頁在背景 15 秒
 /* ════════════════════════════════════════════════════════════════════════════ */
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -200,22 +200,25 @@ function needTextFor(rule, kind, present, total) {
 }
 
 /* ───── 路由與輪詢 ───── */
-let gen = 0, pollTimer = null;
+let gen = 0, pollTimer = null, live = false; // live：目前是否有進行中的表決
 const tickers = new Set();
 setInterval(() => tickers.forEach(f => f()), 250);
 
-function poll(fn, ms) {
+const nextPoll = () => document.hidden ? POLL_MS.hidden : (live ? POLL_MS.live : POLL_MS.idle);
+const isLive = r => !!(r && r.vote && r.vote.status === 'voting');
+function poll(fn) {
   const g = gen;
   const run = async () => {
     if (g !== gen) return;
     try { await fn(); } catch (e) { console.error(e); }
-    if (g === gen) pollTimer = setTimeout(run, ms);
+    if (g === gen) pollTimer = setTimeout(run, nextPoll());
   };
   run();
 }
 
 function route() {
   gen++;
+  live = false;
   clearTimeout(pollTimer);
   tickers.clear();
   document.body.style.background = '';
@@ -359,8 +362,9 @@ function Voter() {
     if (r.relogin) { store.set('vote_token', null); return route(); }
     if (!r.ok) { $('#status').textContent = r.error; return; }
     data = r;
+    live = isLive(r);
     render();
-  }, POLL_MS.voter);
+  });
 }
 
 function VoterLogin() {
@@ -622,12 +626,13 @@ function Admin() {
     if (r.relogin) { store.set('vote_admin', null); return route(); }
     if (!r.ok) return showErr(r.error);
     data = r;
+    live = isLive(r);
     renderMembers();
     renderHistory();
     renderCurrent();
   }
 
-  poll(refresh, POLL_MS.admin);
+  poll(refresh);
 }
 
 function AdminLogin() {
@@ -740,9 +745,10 @@ function Screen() {
     const r = await api('screen');
     if (!r.ok) { $('#title').textContent = r.error; return; }
     data = r;
+    live = isLive(r);
     const sig = JSON.stringify(r.vote) + JSON.stringify(r.members) + r.meeting;
     if (sig !== last) { last = sig; render(); }
-  }, POLL_MS.screen);
+  });
 }
 
 route();
