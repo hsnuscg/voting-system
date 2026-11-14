@@ -253,7 +253,7 @@ function Voter() {
       if (mode === 'wait') {
         main.innerHTML = `<div class="v-empty"><h2 style="font-size:20px">目前沒有進行中的表決</h2><p class="muted" style="line-height:1.6">秘書處開始表決後，此頁會自動顯示投票按鈕。</p></div>`;
       } else if (mode === 'inelig') {
-        main.innerHTML = `${head(v)}<div class="v-empty"><h2 style="font-size:18px">表決開始時你尚未簽到</h2><p class="muted" style="line-height:1.6">本次表決無法投票，如有疑問請洽秘書處。</p></div>`;
+        main.innerHTML = `${head(v)}<div class="v-empty"><h2 style="font-size:18px">你目前未簽到</h2><p class="muted" style="line-height:1.6">表決截止前完成簽到即可投票，請洽秘書處。</p></div>`;
       } else if (mode === 'closed') {
         main.innerHTML = `${head(v)}<h2 style="font-size:26px;font-weight:900">表決已截止</h2>
           <div class="v-timer"><span class="muted">你的投票</span><span id="mine" style="font-size:24px;font-weight:900"></span></div>
@@ -263,14 +263,13 @@ function Voter() {
         main.innerHTML = `${head(v)}
           <div class="v-timer"><span class="muted">剩餘時間</span><span class="num" id="left">--:--</span></div>
           <div class="v-opts">${keysFor(v.kind).map(k => `<button class="v-opt" data-k="${k}" style="--c:${COLORS[k]}" aria-pressed="false">${CHECK}${L[k]}</button>`).join('')}</div>
-          <button class="btn primary v-confirm" id="confirm" disabled>確認送出</button>
           <p class="v-hint" id="hint" role="status"></p>
           <div class="v-foot"><span>門檻：${esc(v.rule)}</span><span class="num" id="cnt"></span></div>`;
         main.querySelectorAll('.v-opt').forEach(b => b.onclick = () => {
-          if (sending) return;
-          selected = b.dataset.k; hintErr = ''; update();
+          if (sending || data.vote.status !== 'voting' || leftSec(data.vote.endsAt) === 0) return;
+          selected = b.dataset.k; hintErr = '';
+          submit();                      // 點選即送出，無須再按確認
         });
-        $('#confirm').onclick = submit;
         let wasEnded = false;
         const tick = () => {
           const s = leftSec(data.vote.endsAt);
@@ -306,24 +305,18 @@ function Voter() {
     const done = confirmed();
     const ended = v.status !== 'voting' || leftSec(v.endsAt) === 0;
     const shown = ended ? (done || selected) : (selected || done);
-    const changed = !!selected && selected !== done;
     main.querySelectorAll('.v-opt').forEach(b => {
       b.setAttribute('aria-pressed', String(b.dataset.k === shown));
       b.disabled = sending || ended;
     });
-    const cf = $('#confirm');
-    if (cf) {
-      cf.disabled = !changed || sending || ended;
-      cf.textContent = sending ? '送出中…' : changed ? (done ? `更改為「${L[selected]}」` : `確認送出「${L[selected]}」`) : (done ? '已送出' : '確認送出');
-    }
     const hint = $('#hint');
     if (hint) {
       hint.style.color = hintErr ? 'var(--no)' : '';
       hint.textContent = hintErr
         || (ended ? (done ? `表決時間已到。你的投票：${L[done]}。` : '表決時間已到。')
-          : changed ? (done ? `你想改為「${L[selected]}」，請按「更改為「${L[selected]}」」。` : `你選擇了「${L[selected]}」，請按「確認送出」。`)
-          : done ? `已送出：${L[done]}。截止前可重新選擇並更改，以最後一次送出為準。`
-          : '請選擇一個選項，再按「確認送出」。截止前仍可更改。');
+          : sending ? '送出中…'
+          : done ? `已投：${L[done]}。截止前點選其他選項即可更改，以最後一次為準。`
+          : '點選選項即送出投票，截止前可更改。');
     }
     const cnt = $('#cnt');
     if (cnt) cnt.textContent = `已投 ${v.voted} / 出席 ${v.eligibleCount}`;
@@ -339,9 +332,9 @@ function Voter() {
       const r = await api('vote', { token, choice: selected });
       if (r.relogin) { store.set('vote_token', null); return route(); }
       if (r.myChoice) { v.myChoice = r.myChoice; store.set('vote_choice_' + v.id, r.myChoice); }
-      if (!r.ok) hintErr = r.error; else selected = null;
-    } catch (e) { hintErr = '網路連線失敗，請再按一次「確認送出」'; }
-    sending = false; update();
+      if (!r.ok) hintErr = r.error;
+    } catch (e) { hintErr = '網路連線失敗，請再點選一次'; }
+    selected = null; sending = false; update();
   }
 
   poll(async () => {
@@ -400,7 +393,7 @@ function Admin() {
     <div class="wrap a-grid">
       <aside class="card a-side">
         <div class="row between"><h2>出席簽到</h2><span class="num" style="font-size:26px;font-weight:800" id="pc"></span></div>
-        <p class="muted small">議員以帳號登入即自動簽到。中途離席或補簽，在此手動調整。表決開始後的變動，從下一次表決起生效。</p>
+        <p class="muted small">議員以帳號登入即自動簽到。中途離席或補簽，在此手動調整。表決進行中才簽到或補簽的議員，截止前也能參與投票，出席人數會即時更新。</p>
         <div id="members" style="max-height:62vh;overflow-y:auto;padding-right:4px"></div>
         <div class="row" style="padding-top:8px">
           <button class="btn sm" id="reload">重新讀取名單</button>
