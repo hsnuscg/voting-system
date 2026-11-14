@@ -41,7 +41,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .field .hint{font-size:13px;font-weight:400;color:var(--muted)}
 .logo{height:30px;width:30px;box-sizing:content-box;padding:3px;background:#fff;flex:none;display:block}
 .logo-w{height:36px;width:36px;flex:none;display:block}
-.s-logo{height:40px;width:40px;flex:none;display:block;align-self:center}
+.s-logo{height:36px;width:36px;flex:none;display:block;align-self:center}
 .card{background:#fff;border:1px solid var(--line);padding:20px}
 .chip{display:inline-block;font-size:13px;padding:4px 10px;border:1px solid var(--line);background:var(--soft);white-space:nowrap}
 .chip.dark{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
@@ -95,7 +95,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .m-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--soft)}
 .m-dot{border-radius:50%;width:8px;height:8px;background:var(--away);flex:none}
 .m-dot.on{background:var(--brand)}
-.m-dist{font-size:15px;font-weight:700;min-width:76px}
+.m-dist{font-size:15px;font-weight:700;min-width:56px}
 .m-name{font-size:14px;color:var(--muted);flex:1;min-width:0}
 .m-online{font-size:12px;color:var(--ok-ink)}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -548,7 +548,7 @@ function Admin() {
             <h2 style="font-size:22px;line-height:1.4;word-break:break-word">${esc(v.billId)} ${esc(v.title)}</h2>
             <span class="muted small">${esc(v.needText)}</span>
           </div>
-          <div style="text-align:right"><div class="muted small">剩餘時間</div><div class="num" id="aleft" style="font-size:48px;font-weight:800;line-height:1">--:--</div></div>
+          <div style="text-align:right"><div class="muted small">剩餘時間</div><div class="num" id="aleft" style="font-size:40px;font-weight:800;line-height:1">--:--</div></div>
         </div>
         <div class="tallies" id="atal"></div>
         <div class="row btns" style="justify-content:flex-end">
