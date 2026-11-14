@@ -423,7 +423,7 @@ function Admin() {
         <section class="card" style="display:flex;flex-direction:column;gap:14px">
           <h2>表決紀錄</h2>
           <div class="table-box"><table>
-            <thead><tr><th>開始時間</th><th>議案</th><th>方式</th><th>門檻</th><th>出席</th><th>贊成／反對／棄權</th><th>未投</th><th>結果</th></tr></thead>
+            <thead><tr><th>開始時間</th><th>議案編號</th><th>議案內容</th><th>方式</th><th>門檻</th><th>出席</th><th>贊成／反對／棄權</th><th>未投</th><th>結果</th></tr></thead>
             <tbody id="hist"></tbody>
           </table></div>
         </section>
@@ -465,9 +465,9 @@ function Admin() {
 
   function renderHistory() {
     $('#hist').innerHTML = data.history.length ? data.history.map(h => `
-      <tr><td class="num">${esc(h.start)}</td><td class="wide">${esc(h.billId)} ${esc(h.title)}</td><td>${esc(h.mode)} · ${esc(h.kind)}</td><td>${esc(h.rule)}</td>
+      <tr><td class="num">${esc(h.start)}</td><td class="num">${esc(h.billId)}</td><td class="wide">${esc(h.title)}</td><td>${esc(h.mode)} · ${esc(h.kind)}</td><td>${esc(h.rule)}</td>
       <td class="num">${esc(h.present)}</td><td class="num">${esc(h.yes)} / ${esc(h.no)} / ${esc(h.abs)}</td><td class="num">${esc(h.notVoted)}</td><td style="font-weight:700">${esc(h.result)}</td></tr>`).join('')
-      : '<tr><td colspan="8" class="muted">尚無紀錄</td></tr>';
+      : '<tr><td colspan="9" class="muted">尚無紀錄</td></tr>';
   }
 
   function renderCurrent() {
